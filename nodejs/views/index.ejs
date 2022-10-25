@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  
+  <script src="https://js.pusher.com/beams/1.0/push-notifications-cdn.js"></script>
+</head>
+<body style="text-align: center;">
+  
+  <h1 style="margin-top: 10%;">It's Running OK</h1>
+  <!-- <button onclick="enableNotifications()">Enable Notifications</button> -->
+  
+  
+  <script>
+    if (navigator.serviceWorker) {
+      // Start registration process on every page load
+      window.addEventListener('load', () => {
+          navigator.serviceWorker
+              // The register function takes as argument
+              // the file path to the worker's file
+              .register('/service-worker.js')
+              // Gives us registration object
+              .then(reg => console.log('Service Worker Registered'))
+              .catch(swErr => console.log(
+                    `Service Worker Installation Error: ${swErr}}`));
+        });
+    }
+    
+    const beamsClient = new PusherPushNotifications.Client({
+      instanceId: 'dc1dfd43-1815-4b60-9ea0-b59937f51dd7',
+      secretKey: 'abcde'
+    });
+
+    
+    beamsClient
+      .start()
+      .then((beamsClient) => beamsClient.getDeviceId())
+      .then((deviceId) =>
+        console.log("Successfully registered with Beams. Device ID:", deviceId)
+      )
+      .then(() => beamsClient.addDeviceInterest("hello"))
+      .then(() => beamsClient.getDeviceInterests())
+      .then((interests) => console.log("Current interests:", interests))
+      .catch(console.error);
+      
+      
+    // function enableNotifications() {
+      // beamsClient.start()
+      //   .then(() => beamsClient.addDeviceInterest('hello'))
+      //   .then(() => console.log('Successfully registered and subscribed!'))
+      //   .catch(console.error);
+    // }
+    
+  </script>
+</body>
+</html>
