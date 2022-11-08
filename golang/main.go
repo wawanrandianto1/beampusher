@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/pusher/pusher-http-go/v5"
+	"github.com/rs/cors"
 )
 
 // const (
@@ -58,7 +59,7 @@ func main() {
 		}
 
 		log.Printf("received method: %s", r.Method)
-		params, _ := ioutil.ReadAll(r.Body) // expects params to contain socket_id & channel_name
+		params, _ := io.ReadAll(r.Body) // expects params to contain socket_id & channel_name
 
 		log.Printf("params: %v", string(params))
 
@@ -73,7 +74,7 @@ func main() {
 
 		log.Printf("response: %s", response)
 
-		responseOk, err := json.Marshal(Respon{"OK"})
+		responseOk, err := json.Marshal(response)
 		if err != nil {
 			log.Printf("error: %v", err)
 			http.Error(w, http.StatusText(500), 500)
@@ -81,10 +82,13 @@ func main() {
 			return
 		}
 
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(responseOk)
 	})
 
-	http.ListenAndServe(":5000", r)
+	handler := cors.AllowAll().Handler(r)
+	http.ListenAndServe(":5000", handler)
 }

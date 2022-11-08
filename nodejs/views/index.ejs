@@ -47,45 +47,50 @@
           "channel_name" : channelName
         }
         var convJson = JSON.stringify(obJson)
-        var body = JSON.stringify("socket_id=" + pusher.connection.socket_id + "&channel_name=" + channelName);
-        
-        const response = await fetch("http://127.0.0.1:5000/pusher/auth", {
+        var body = "socket_id=" + pusher.connection.socket_id + "&channel_name=" + channelName;
+      
+        const response = await fetch("http://localhost:3000/pusher/auth", {
           method: 'POST', // *GET, POST, PUT, DELETE, etc.
-          mode: 'no-cors', // no-cors, *cors, same-origin
-          cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-          credentials: 'same-origin', // include, *same-origin, omit
-          headers: {
-            'Content-Type': 'application/json'
+          // mode: 'no-cors', // no-cors, *cors, same-origin
+          headers: { 
+            "Access-Control-Allow-Origin": "*",
+            'Content-Type': 'application/json' 
           },
-          body // body data type must match "Content-Type" header
+          body: convJson // body data type must match "Content-Type" header
         });
-        
+      
         console.log("response", response);
-        console.log("response status", response.status);
+        console.log("obJson :", obJson);
+        
+        const jsonResp = await response.json();
+        console.log("response json", jsonResp);
         if (response.status == 200) {
           // set the auth info in the preAuth object of the auth options
-          // pusher.config.auth.preAuth[channelName] = JSON.parse(request.responseText);
-          console.log('success');
+          // const authBody = JSON.stringify({"auth": jsonResp});
+          pusher.config.auth.preAuth[channelName] = JSON.parse(jsonResp);
+          // pusher.config.auth[channelName] = JSON.parse(jsonResp);
         }
-        
-        
-        console.log("obJson :", obJson);
-      }, 1000)
-      
+      }, 1200)
+            
       // ========================================================
-      // var request = new XMLHttpRequest();
-      // request.open("POST", "http://127.0.0.1:5000/pusher/auth", true);
-      // request.setRequestHeader("Access-Control-Allow-Origin", "*");
-      // request.setRequestHeader("Content-type", "application/json");
-      // request.onreadystatechange = function () {
-      //   if (request.readyState == 4 && request.status == 200) {
-      //     // set the auth info in the preAuth object of the auth options
-      //     pusher.config.auth.preAuth[channelName] =
-      //       JSON.parse(request.responseText);
-      //   }
-      // };
-      // request.send(convJson);
-    };
+      // setTimeout(function(){
+      //   var body = "socket_id=" + pusher.connection.socket_id + "&channel_name=" + channelName;
+      //   var request = new XMLHttpRequest();
+      //   request.open("POST", "http://localhost:5000/pusher/auth", true);
+      //   request.setRequestHeader("Access-Control-Allow-Origin", "*");
+      //   request.setRequestHeader("Content-type", "application/json");
+      //   request.onreadystatechange = function () {
+      //     if (request.readyState == 4 && request.status == 200) {
+      //       // set the auth info in the preAuth object of the auth options
+      //       pusher.config.auth.preAuth[channelName] =
+      //         JSON.parse(request.responseText);
+      //     }
+      //   };
+      //   request.send(body);
+        
+      // }, 1200);
+    }
+      
     
     pusher.preAuthenticate("testchannel");
   </script>
