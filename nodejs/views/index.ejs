@@ -15,8 +15,8 @@
     var supportedAuthorizers = Pusher.Runtime.getAuthorizers();
 
     // add our own custom authorizer that uses pre retrieved auth data
-    supportedAuthorizers.preAuthenticated = async function (context, socketId, callback) {
-      var authData = await this.authOptions.preAuth[this.channel.name];
+    supportedAuthorizers.preAuthenticated = function (context, socketId, callback) {
+      var authData = this.authOptions.preAuth[this.channel.name];
       if (!authData) {
         callback(true, "You need to pre-authenticate" + this.channel.name);
       } else {
@@ -40,7 +40,7 @@
     });
 
     // retrieve the auth info for the given channel from our server
-    pusher.preAuthenticate = async function (channelName) {
+    pusher.preAuthenticate = function (channelName) {
       setTimeout(async function(){
         var obJson = {
           "socket_id" : pusher.connection.socket_id,
@@ -96,7 +96,7 @@
     }
       
     
-    pusher.preAuthenticate("testchannel");
+    pusher.preAuthenticate("private-ch1");
   </script>
   
 </head>
@@ -106,5 +106,10 @@
   
   <h1>Pusher Test</h1>
 
+  <script>
+    setTimeout(function() {
+      pusher.subscribe("private-ch1");
+    }, 3000)
+  </script>
 </body>
 </html>
