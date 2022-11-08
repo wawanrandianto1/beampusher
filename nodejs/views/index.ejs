@@ -4,56 +4,98 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Pusher Test</title>
   
-  <script src="https://js.pusher.com/beams/1.0/push-notifications-cdn.js"></script>
+  <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
+  
+  <script>    
+    // Enable pusher logging - don't include this in production
+    Pusher.logToConsole = true;
+    
+    var supportedAuthorizers = Pusher.Runtime.getAuthorizers();
+
+    // add our own custom authorizer that uses pre retrieved auth data
+    supportedAuthorizers.preAuthenticated = async function (context, socketId, callback) {
+      var authData = await this.authOptions.preAuth[this.channel.name];
+      if (!authData) {
+        callback(true, "You need to pre-authenticate" + this.channel.name);
+      } else {
+        callback(false, this.authOptions.preAuth[this.channel.name]);
+      }
+    };
+
+    // replace the default getAuthorizers with our extended version
+    Pusher.Runtime.getAuthorizers = function () {
+      return supportedAuthorizers;
+    };
+
+    var pusher = new Pusher("e48e401e9da913009f95", {
+      cluster: 'ap1',
+      encrypted: true,
+      auth: {
+        preAuth: {}
+      },
+      // set the transport to use our custom authorizer
+      authTransport: "preAuthenticated",
+    });
+
+    // retrieve the auth info for the given channel from our server
+    pusher.preAuthenticate = async function (channelName) {
+      setTimeout(async function(){
+        var obJson = {
+          "socket_id" : pusher.connection.socket_id,
+          "channel_name" : channelName
+        }
+        var convJson = JSON.stringify(obJson)
+        var body = JSON.stringify("socket_id=" + pusher.connection.socket_id + "&channel_name=" + channelName);
+        
+        const response = await fetch("http://127.0.0.1:5000/pusher/auth", {
+          method: 'POST', // *GET, POST, PUT, DELETE, etc.
+          mode: 'no-cors', // no-cors, *cors, same-origin
+          cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+          credentials: 'same-origin', // include, *same-origin, omit
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body // body data type must match "Content-Type" header
+        });
+        
+        console.log("response", response);
+        console.log("response status", response.status);
+        if (response.status == 200) {
+          // set the auth info in the preAuth object of the auth options
+          // pusher.config.auth.preAuth[channelName] = JSON.parse(request.responseText);
+          console.log('success');
+        }
+        
+        
+        console.log("obJson :", obJson);
+      }, 1000)
+      
+      // ========================================================
+      // var request = new XMLHttpRequest();
+      // request.open("POST", "http://127.0.0.1:5000/pusher/auth", true);
+      // request.setRequestHeader("Access-Control-Allow-Origin", "*");
+      // request.setRequestHeader("Content-type", "application/json");
+      // request.onreadystatechange = function () {
+      //   if (request.readyState == 4 && request.status == 200) {
+      //     // set the auth info in the preAuth object of the auth options
+      //     pusher.config.auth.preAuth[channelName] =
+      //       JSON.parse(request.responseText);
+      //   }
+      // };
+      // request.send(convJson);
+    };
+    
+    pusher.preAuthenticate("testchannel");
+  </script>
+  
 </head>
 <body style="text-align: center;">
   
   <h1 style="margin-top: 10%;">It's Running OK</h1>
-  <!-- <button onclick="enableNotifications()">Enable Notifications</button> -->
   
-  
-  <script>
-    if (navigator.serviceWorker) {
-      // Start registration process on every page load
-      window.addEventListener('load', () => {
-          navigator.serviceWorker
-              // The register function takes as argument
-              // the file path to the worker's file
-              .register('/service-worker.js')
-              // Gives us registration object
-              .then(reg => console.log('Service Worker Registered'))
-              .catch(swErr => console.log(
-                    `Service Worker Installation Error: ${swErr}}`));
-        });
-    }
-    
-    const beamsClient = new PusherPushNotifications.Client({
-      instanceId: 'dc1dfd43-1815-4b60-9ea0-b59937f51dd7',
-      secretKey: 'abcde'
-    });
+  <h1>Pusher Test</h1>
 
-    
-    beamsClient
-      .start()
-      .then((beamsClient) => beamsClient.getDeviceId())
-      .then((deviceId) =>
-        console.log("Successfully registered with Beams. Device ID:", deviceId)
-      )
-      .then(() => beamsClient.addDeviceInterest("hello"))
-      .then(() => beamsClient.getDeviceInterests())
-      .then((interests) => console.log("Current interests:", interests))
-      .catch(console.error);
-      
-      
-    // function enableNotifications() {
-      // beamsClient.start()
-      //   .then(() => beamsClient.addDeviceInterest('hello'))
-      //   .then(() => console.log('Successfully registered and subscribed!'))
-      //   .catch(console.error);
-    // }
-    
-  </script>
 </body>
 </html>
